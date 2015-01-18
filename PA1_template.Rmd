@@ -1,25 +1,96 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
+My First knitr Document
+
+=======================
+
+Download and read:
+
+```{r Download and Read file}
+if(!file.exists("./data")){dir.create("./data")}
+fileUrl <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
+download.file(fileUrl, destfile = "./data/fitbit.zip", method = "curl")
+unzip("./data/fitbit.zip", list = FALSE, overwrite = TRUE,
+      junkpaths = FALSE, exdir = "./data", unzip = "internal",
+      setTimes = FALSE)
+
+fitbit <- read.csv("./data/activity.csv", sep = ",", header = TRUE)
+```
+
+Create a histogram:
+
+```{r Histogram}
+
+graph <- tapply(fitbit$steps,fitbit$date,sum)
+
+hist(graph, breaks = 10, xlab = "Steps taken per day", main = paste("Histogram of Steps"))
+
+```
+
+Mean steps taken and Median:
+
+```{r Mean Steps}
+meansteps <- mean(graph, na.rm=TRUE)
+mediansteps <- median(graph, na.rm=TRUE)
+```
+
+The mean is `r meansteps`. 
+The median is `r mediansteps`.
 
 
-## Loading and preprocessing the data
+Create a time series plot with interval and average steps.
 
+```{r Time Series Plot}
+routine <- tapply(fitbit$steps,fitbit$interval, mean, na.rm=TRUE)
+intervaltime <- names(tapply(fitbit$steps,fitbit$interval, mean, na.rm=TRUE))
+plot(routine~intervaltime, type = "l", xlab="Interval", ylab="Average Steps", col = "red", main = paste("Daily Routine"))
+```
 
+```{r MAX step interval}
+max(routine)
+```
 
-## What is mean total number of steps taken per day?
+This corresponds with interval 835-840!
 
+Number of NA values:
 
+```{r NA Values}
+sum(is.na(fitbit$steps))
+```
 
-## What is the average daily activity pattern?
+Strategy for filling missing data = mean for that 5 minute interval.
 
+```{r Filling in NAs}
+fitbit$steps[is.na(fitbit$steps)] <- with(fitbit, ave(steps, interval, 
+   FUN = function(x) mean(x, na.rm = TRUE)))[is.na(fitbit$steps)]
 
+```
 
-## Imputing missing values
+Create a new dataset with the new estimates.
 
+```{r New Dataset}
+newdata <- fitbit
+head(newdata)
+```
 
+Draw a new histogram with the new data set!
 
-## Are there differences in activity patterns between weekdays and weekends?
+```{r New Histogram}
+newgram <- tapply(newdata$steps,newdata$date,sum)
+
+hist(newgram, breaks = 10, xlab = "Steps taken per day", main = paste("Histogram of Steps"))
+
+```
+
+Recalculate mean and median with new data set.
+
+```{r New Mean and Median}
+
+newmeansteps <- mean(newgram, na.rm=TRUE)
+newmediansteps <- median(newgram, na.rm=TRUE)
+
+```
+
+The new mean is `r newmeansteps`. 
+The new median is `r newmediansteps`.
+
+These values are very similar to before. 
+NA values do not affect much.
